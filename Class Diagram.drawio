@@ -1,0 +1,22 @@
+<mxfile host="app.diagrams.net" modified="2024-11-09T17:15:42.762Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36" etag="QvcJfjv6jNSJ3XZdD2dZ" version="24.6.4" type="github">
+  <diagram name="Page-1" id="g21yAkTpcs1MMwLvzUjH">
+    <mxGraphModel dx="1194" dy="592" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="HcAQseWbdD2p0SUIdB93-1" value="Card" style="swimlane;fontStyle=1;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="160" y="240" width="290" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="HcAQseWbdD2p0SUIdB93-2" value="- cardValue : int&lt;div&gt;- weighting : int&lt;/div&gt;&lt;div&gt;- WEIGHTING_MULTIPLIER: int&lt;/div&gt;&lt;div&gt;- PREFERRED_WEIGHTING : int&lt;/div&gt;&lt;div&gt;- NON_PREFERRED_WEIGHTING : int&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" vertex="1" parent="HcAQseWbdD2p0SUIdB93-1">
+          <mxGeometry y="26" width="290" height="84" as="geometry" />
+        </mxCell>
+        <mxCell id="HcAQseWbdD2p0SUIdB93-3" value="" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" vertex="1" parent="HcAQseWbdD2p0SUIdB93-1">
+          <mxGeometry y="110" width="290" height="8" as="geometry" />
+        </mxCell>
+        <mxCell id="HcAQseWbdD2p0SUIdB93-4" value="+ getCardValue() : int&lt;div&gt;+ getWeighting() : int&lt;/div&gt;&lt;div&gt;+ setWeighting( isPreferred : bool ) : void&lt;/div&gt;&lt;div&gt;+ incrementWeighting() : void#&lt;/div&gt;&lt;div&gt;+ Card( cardValue : int )&lt;/div&gt;" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;" vertex="1" parent="HcAQseWbdD2p0SUIdB93-1">
+          <mxGeometry y="118" width="290" height="82" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
