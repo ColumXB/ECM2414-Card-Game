@@ -16,11 +16,18 @@ public class PackHandler_Test {
 
     PackHandler oops;
 
+    // ran before tests to prevent previous testing from interfering with current testing
     @BeforeAll
     static void refresh() {
         
     }
 
+    /**
+     * tests each value expecting no assertion to be thrown
+     * this test uses examples valid values for inputted number of players
+     * no exception is thrown as the values are valid
+     * @param numPlayers
+     */
     @DisplayName("Valid number of players input")
     @ParameterizedTest
     @ValueSource(ints = {1, 2, 3, 4})
@@ -31,8 +38,13 @@ public class PackHandler_Test {
         assertDoesNotThrow(() -> packHandler.validateNumPlayers(numPlayers));
     }
 
-
-    @DisplayName("Invalid Values")
+    /**
+     * the other side of the previous test
+     * tests example invalid values for inputted number of players
+     * IllegalArgumentException is expected to be thrown as the values are invalid
+     * @param numPlayers
+     */
+    @DisplayName("Invalid number of players input")
     @ParameterizedTest  
     @ValueSource(ints = {0, -1, -2, -12, Integer.MIN_VALUE})
     void invalidNumPlayersTest(int numPlayers) {
@@ -42,6 +54,12 @@ public class PackHandler_Test {
         assertThrows(IllegalArgumentException.class, () -> packHandler.validateNumPlayers(numPlayers));
     }
 
+    /**
+     * tests example file location expecting no assertion to be thrown
+     * this test uses examples valid file location for inputted file path
+     * no exception is thrown as the location is valid
+     * @param filePath
+     */
     @DisplayName("Valid File Path")
     @ParameterizedTest  
     @ValueSource(strings = {"testPack.txt"})
@@ -53,6 +71,12 @@ public class PackHandler_Test {
         assertDoesNotThrow(() -> packHandler.validateFilePath(filePath));
     }
 
+    /**
+     * the other side of the previous test
+     * tests example invalid location for inputted file path
+     * InvalidFileException is expected to be thrown as the location is invalid
+     * @param filePath
+     */
     @DisplayName("Invalid File Path")
     @ParameterizedTest  
     @ValueSource(strings = {"a.txt", "b.txt", "c.txt", "d.txt"})
@@ -63,6 +87,12 @@ public class PackHandler_Test {
         assertThrows(InvalidFileException.class, () -> packHandler.validateFilePath(filePath));
     }
     
+    /**
+     * tests each value expecting no assertion to be thrown
+     * this test uses examples valid values for inputted card values
+     * no exception is thrown as the values are valid
+     * @param line
+     */
     @DisplayName("Valid line value for card")
     @ParameterizedTest
     @ValueSource(strings = {"1", "2", "3", "4", "2147483647"})
@@ -73,7 +103,12 @@ public class PackHandler_Test {
         assertDoesNotThrow(() -> packHandler.validityCheck(line));
     }
 
-
+    /**
+     * the other side of the previous test
+     * tests example invalid values for inputted card values
+     * InvalidCardValueException is expected to be thrown as the values are invalid
+     * @param line
+     */
     @DisplayName("Invalid line value for card")
     @ParameterizedTest  
     @ValueSource(strings = {"a", "-1", "-2", "-3", "-2147483647"})
