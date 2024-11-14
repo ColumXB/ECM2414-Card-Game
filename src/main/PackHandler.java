@@ -1,5 +1,3 @@
-//https://www.w3schools.com/java/java_files_read.asp
-//https://stackoverflow.com/questions/1647907/junit-how-to-simulate-system-in-testing
 package main;
 import java.io.File;
 import java.util.Scanner;
@@ -11,10 +9,14 @@ public class PackHandler {
     private int numPlayers;
     private int packSize; 
     String filePath; //text file holding the values that will be used for pack
-    private int[] pack; //TODO look at why this needs to be static
+    private int[] pack;
 
+    /**
+     * prints prompts to terminal expecting inputs used in creating/validating the pack
+     */
     public void inputs() {
-        Scanner scanner = new Scanner(System.in);
+        //number of players
+        Scanner scanner = new Scanner(System.in); // reads inputs from terminal
         int numPlayers;
         String initialFilePath;
 
@@ -28,11 +30,13 @@ public class PackHandler {
                 this.pack = validateNumPlayers(numPlayers);
                 break; // Exit loop after successful validation
 
-            } catch (IllegalArgumentException | InputMismatchException e) {
+            } catch (IllegalArgumentException | InputMismatchException e) { //exceptions thrown when an invalid input is given, such as a string.
                 System.out.println("Invalid input. Please enter a valid integer:");
                 scanner.next(); // Clear invalid input
         }
     }
+
+    // file path/location
     System.out.print("Please enter valid location of pack to load: ");
         while (true) {
             try {
@@ -41,10 +45,9 @@ public class PackHandler {
                 // Validate filepath
                 filePath = validateFilePath(initialFilePath);
                 break; // Exit loop after successful validation
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException e) { // exception thrown when the file input is invalid
                 System.out.println("Invalid input. Please enter valid location of pack to load:");
-            } catch (InvalidFileException e) {
-                // Debug: Print out the exception message
+            } catch (InvalidFileException e) {// exception thrown when the file input doesnt not match a necessary file location 
                 System.out.println("Invalid file. Please enter valid location of pack to load: ");
             }
         }
@@ -63,9 +66,10 @@ public class PackHandler {
             throw new IllegalArgumentException("Error: Number of players must be a positive integer greater than 0.");
         }
 
+        // create the pack
         this.numPlayers = numPlayers;
         this.packSize = 8 * numPlayers;
-        this.pack = new int[packSize]; // Initialize the pack array
+        this.pack = new int[packSize];
 
         return pack;
     }
@@ -76,15 +80,14 @@ public class PackHandler {
      * @return filePath
      */
     public String validateFilePath(String filePath) throws InvalidFileException {
+        int lineCount = 0;
+
+        // validate file location
         if (filePath == null || filePath.trim().isEmpty()) {
             throw new IllegalArgumentException("Invalid input. Please enter a non-empty string.");
         }
 
-        System.out.println("Trying to open file: " + new File(filePath).getAbsolutePath());
-
-        // Call validFileLength method to validate
-        int lineCount = 0;
-        
+        // search for file location
         try {
             File cardPackFile = new File(filePath);
         if (!cardPackFile.exists()) {
@@ -100,7 +103,7 @@ public class PackHandler {
         }
 
         reader.close();
-    } catch (FileNotFoundException e) {
+    } catch (FileNotFoundException e) { // thrown when file location cannot be found or doesnt match anything.
         System.out.println("File not found: " + filePath);
         throw new InvalidFileException("File not found: " + filePath);
     }
@@ -131,19 +134,21 @@ public class PackHandler {
             while (reader.hasNextLine()) {
                 String line = reader.nextLine();
 
+                //iterate through each line in the input pack
+                //replace the empty space in pack with a valid value
                 try {
                     int data = validityCheck(line);
                     pack[packElement] = data;
                     packElement ++;
-                } catch (InvalidCardValueException e) {
+                } catch (InvalidCardValueException e) { // thrown when card value is below 1 thus invalid
                     System.out.println("Error: " + e.getMessage());
-                    e.printStackTrace();  // Optionally print stack trace for debugging
+                    e.printStackTrace();
                 }
             }
             reader.close();
-        } catch (FileNotFoundException e) { //throws an exception if the file path is invalid
+        } catch (FileNotFoundException e) {
             System.out.println("File Path Error.");
-            e.printStackTrace(); // TODO: look into what this does
+            e.printStackTrace();
         }
 
         return pack;
@@ -191,10 +196,17 @@ public class PackHandler {
         return numPlayers;
     }
 
+    /**
+     * used in testing for setting an specific example pack size
+     * @param packSize
+     */
     public void setPackSize(int packSize) {
         this.packSize = packSize;
     }
 
+    /**
+     * @return pack size
+     */
     public int getPackSize() {
         return this.packSize;
     }
@@ -210,5 +222,3 @@ public class PackHandler {
         }
     }
 }
-
-// test git commits
