@@ -235,4 +235,20 @@ public class Logger_Test {
         assert file2.exists();
 
     }
+
+
+    /**
+     * Checks that closing an already closed logger will raise the correct error
+     * @throws IOException
+     */
+    @DisplayName("Double Close Check")
+    @Test
+    public void doubleCloseTest() throws IOException {
+        Logger logger1 = new Logger(this.filename);
+        logger1.close();
+        Exception exception = assertThrows(IOException.class, () -> logger1.close());
+        String expectedMessage = "Cannot close closed logger";
+        String actualMessage = exception.getMessage();
+        assertEquals(expectedMessage, actualMessage);
+    }
 }

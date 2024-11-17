@@ -68,6 +68,10 @@ public class Logger {
      */
     public void close() throws IOException {
         
+        if (isClosed) {
+            throw new IOException("Cannot close closed logger"); //TODO upon name change, change the message
+        }
+
         this.lock.release();
         this.channel.close();
         this.fileStream.close();
