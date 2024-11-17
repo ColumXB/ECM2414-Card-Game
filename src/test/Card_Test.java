@@ -36,6 +36,7 @@ class Card_Test {
     @ParameterizedTest  
     @ValueSource(ints = {0, -1, -2, -12, Integer.MIN_VALUE})
     void invalidValuesTest(int testCase) {
+        
         assertThrows(InvalidCardException.class, () -> new Card(testCase));
     }
 }
