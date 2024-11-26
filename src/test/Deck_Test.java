@@ -217,6 +217,7 @@ public class Deck_Test {
      * Tests the addCard method works as expected
      * @throws Exception
      */
+    @SuppressWarnings("unchecked")
     @DisplayName("Add Test")
     @Test
     public void addTest() throws Exception {
@@ -246,6 +247,7 @@ public class Deck_Test {
      * Tests the removeCard method works as expected
      * @throws Exception
      */
+    @SuppressWarnings("unchecked")
     @DisplayName("Remove Test")
     @Test
     public void removeTest() throws Exception {
@@ -255,7 +257,6 @@ public class Deck_Test {
 
         Field queueField = Deck.class.getDeclaredField("cardDeck");
         queueField.setAccessible(true);
-
         Queue<Card> queue1 = (Queue<Card>) queueField.get(deck1);
         assertEquals(queue1.size(), 3);
 
@@ -330,6 +331,9 @@ public class Deck_Test {
         String expectedMessage = "Deck contains too many cards (5 or more)";
         String actualMessage = exception.getMessage();
         assertEquals(expectedMessage, actualMessage);
+
+        deck1.removeCard();
+        deck1.closeLogger();
     }
 
 
@@ -346,5 +350,8 @@ public class Deck_Test {
         String expectedMessage = "Deck contains too little cards (3 or less)";
         String actualMessage = exception.getMessage();
         assertEquals(expectedMessage, actualMessage);
+
+        deck1.addCard(new Card(1));
+        deck1.closeLogger();
     }
 }
