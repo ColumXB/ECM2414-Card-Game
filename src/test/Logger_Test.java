@@ -251,4 +251,21 @@ public class Logger_Test {
         String actualMessage = exception.getMessage();
         assertEquals(expectedMessage, actualMessage);
     }
+
+
+    @DisplayName("Null Filename Check")
+    @Test
+    public void nullFilenameTest() {
+        assertThrows(NullPointerException.class, () -> new Logger(null));
+    }
+
+
+    @DisplayName("Null Message Check")
+    @Test
+    public void nullMessageTest() throws IOException{
+        Logger logger1 = new Logger(this.filename);
+        assertThrows(NullPointerException.class, () -> logger1.log(null));
+        logger1.close();
+    }
+
 }

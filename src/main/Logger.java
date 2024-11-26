@@ -26,6 +26,10 @@ public class Logger {
      */
     public Logger(String filename) throws IOException { //TODO handle these exceptions in a better way
 
+        if (filename == null) {
+            throw new NullPointerException();
+        }
+
         File file = new File(filename);
         file.createNewFile();
 
@@ -36,6 +40,7 @@ public class Logger {
 
         // Deletes all contents of file
         channel.truncate(0);
+        //TODO exception where???
     }
 
 
@@ -47,6 +52,10 @@ public class Logger {
      * @throws IOException
      */
     public void log(String message) throws IOException {
+
+        if (message == null) {
+            throw new NullPointerException();
+        }
 
         if (isClosed) {
             throw new IOException("Cannot write to closed logger"); //TODO upon name change, change the message
