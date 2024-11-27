@@ -7,7 +7,6 @@ import main.PackHandler;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -15,12 +14,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 public class PackHandler_Test {
 
     PackHandler oops;
-
-    // ran before tests to prevent previous testing from interfering with current testing
-    @BeforeAll
-    static void refresh() {
-        
-    }
 
     /**
      * tests each value expecting no assertion to be thrown
@@ -46,7 +39,7 @@ public class PackHandler_Test {
      */
     @DisplayName("Invalid number of players input")
     @ParameterizedTest  
-    @ValueSource(ints = {0, -1, -2, -12, Integer.MIN_VALUE})
+    @ValueSource(ints = {Integer.MAX_VALUE, 0, -1, -2, -12, Integer.MIN_VALUE})
     void invalidNumPlayersTest(int numPlayers) {
         PackHandler packHandler = new PackHandler();
     
