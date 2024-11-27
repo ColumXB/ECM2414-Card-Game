@@ -28,12 +28,13 @@ public class Card {
 
 
     /**
-     * Sets probability weight of card depending on if it is preffered or not
+     * Sets probability weight of card depending on if it is preferred or not
      * @param isPreferred Whether the card is preferred by the player or not
      */
     public void setWeighting(boolean isPreferred) {
-        if  (isPreferred) {
+        if (isPreferred) {
             this.weighting = this.preferredWeighting;
+            //preferredWeighting == 0
         } else {
             this.weighting = this.nonPreferredWeighting;
         }
@@ -72,5 +73,4 @@ public class Card {
         Card card = new Card(5);
         System.out.println(card.getCardValue());
     }
-
 }
