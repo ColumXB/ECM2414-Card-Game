@@ -33,24 +33,24 @@ public class PackHandler {
             } catch (IllegalArgumentException | InputMismatchException e) { //exceptions thrown when an invalid input is given, such as a string.
                 System.out.println("Invalid input. Please enter a valid integer:");
                 scanner.next(); // Clear invalid input
-        }
-    }
-
-    // file path/location
-    System.out.print("Please enter valid location of pack to load: ");
-        while (true) {
-            try {
-                initialFilePath = scanner.nextLine().trim();
-
-                // Validate filepath
-                filePath = validateFilePath(initialFilePath);
-                break; // Exit loop after successful validation
-            } catch (IllegalArgumentException e) { // exception thrown when the file input is invalid
-                System.out.println("Invalid input. Please enter valid location of pack to load:");
-            } catch (InvalidFileException e) {// exception thrown when the file input doesnt not match a necessary file location 
-                System.out.println("Invalid file. Please enter valid location of pack to load: ");
             }
         }
+
+        // file path/location
+        System.out.print("Please enter valid location of pack to load: ");
+            while (true) {
+                try {
+                    initialFilePath = scanner.nextLine().trim();
+
+                    // Validate filepath
+                    filePath = validateFilePath(initialFilePath);
+                    break; // Exit loop after successful validation
+                } catch (IllegalArgumentException e) { // exception thrown when the file input is invalid
+                    System.out.println("Invalid input. Please enter valid location of pack to load:");
+                } catch (InvalidFileException e) {// exception thrown when the file input doesnt not match a necessary file location 
+                    System.out.println("Invalid file. Please enter valid location of pack to load: ");
+                }
+            }
 
         scanner.close();
     }
@@ -64,6 +64,8 @@ public class PackHandler {
         // Check if the number of players is a valid positive integer
         if (numPlayers <= 0) {
             throw new IllegalArgumentException("Error: Number of players must be a positive integer greater than 0.");
+        } else if (numPlayers > 250000000) {
+            throw new IllegalArgumentException("Error: Too many players. (must be less than 250,000,000)");
         }
 
         // create the pack
@@ -103,10 +105,10 @@ public class PackHandler {
         }
 
         reader.close();
-    } catch (FileNotFoundException e) { // thrown when file location cannot be found or doesnt match anything.
-        System.out.println("File not found: " + filePath);
-        throw new InvalidFileException("File not found: " + filePath);
-    }
+        } catch (FileNotFoundException e) { // thrown when file location cannot be found or doesnt match anything.
+            System.out.println("File not found: " + filePath);
+            throw new InvalidFileException("File not found: " + filePath);
+        }
 
         System.out.println("Required length: " + lineCount);
         System.out.println("Actual length: " + this.packSize);
@@ -155,27 +157,24 @@ public class PackHandler {
     }
 
     /**
-     * each line of the inputted pack is fed into the method,
-     * the value is then converted from string to integer,
-     * 
-     * it is then checked that is satisfies the following:
-     * the value is an integer
-     * the value is above 0 (no negatives)
-     * 
-     * the integer is returned
-     * @param line
-     * @return
+     * takes individual inputs from the input pack and checks if they are
+     * valid to be put into the pack being created. 
+     * @param line a line taken from the input pack to be tested for validity
+     * @return valid card value to be put into the pack being created
      */
     public int validityCheck(String line) throws InvalidCardValueException{
          
         try {
             int validInput = Integer.parseInt(line); // Convert the line to an integer
 
+            // line integer must be non-zero positive.
             if (validInput > 0) {
                 return validInput;
             } else {
                 throw new InvalidCardValueException("Input must be greater than 0: " + line);
             }
+
+        // exception if line cannot be converted into an integer e.g. a lettered string
         } catch (NumberFormatException e) {
             throw new InvalidCardValueException("Invalid integer in file: " + line);
         }
