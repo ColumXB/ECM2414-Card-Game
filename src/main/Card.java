@@ -62,15 +62,4 @@ public class Card {
 
         this.cardValue = cardValue;
     }
-
-    /**
-     * Temporary test before Junit becomes viable
-     * @param args
-     * @throws InvalidCardException
-     */
-    public static void main(String[] args) throws InvalidCardException{
-        Card card = new Card(5);
-        System.out.println(card.getCardValue());
-    }
-
 }

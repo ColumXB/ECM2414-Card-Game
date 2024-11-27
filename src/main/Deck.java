@@ -146,13 +146,4 @@ public class Deck {
     public int getDeckID() {
         return deckID;
     }
-
-
-    public static void main(String[] args) throws InvalidCardException, DeckLengthException, IOException {
-        int[] rizz = {2, 6, 8, 1};
-        Deck oops = new Deck(rizz);
-        oops.removeCard();
-        oops.addCard(new Card(9));
-        oops.finalDeckLog();
-    }
 }
