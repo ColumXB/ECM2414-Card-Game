@@ -9,7 +9,7 @@ import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 
 
-public class Logger {
+public class OutputManager {
 
     private RandomAccessFile fileStream;
     private FileChannel channel;
@@ -24,7 +24,7 @@ public class Logger {
      * @param filename Name of file to be written to
      * @throws Exception There are several causes for this exception
      */
-    public Logger(String filename) throws IOException { //TODO handle these exceptions in a better way
+    public OutputManager(String filename) throws IOException {
 
         if (filename == null) {
             throw new NullPointerException();
@@ -34,13 +34,12 @@ public class Logger {
         file.createNewFile();
 
         // Opens and locks connection to file 
-        this.fileStream = new RandomAccessFile(filename, "rw"); //TODO close this
+        this.fileStream = new RandomAccessFile(filename, "rw");
         this.channel = this.fileStream.getChannel();
         this.lock = channel.lock();
 
         // Deletes all contents of file
         channel.truncate(0);
-        //TODO exception where???
     }
 
 
@@ -51,14 +50,14 @@ public class Logger {
      * @param message Message to be logged in the file
      * @throws IOException
      */
-    public void log(String message) throws IOException {
+    public void output(String message) throws IOException {
 
         if (message == null) {
             throw new NullPointerException();
         }
 
         if (isClosed) {
-            throw new IOException("Cannot write to closed logger"); //TODO upon name change, change the message
+            throw new IOException("Cannot write to closed output manager");
         }
 
         buffer = ByteBuffer.wrap(message.toString().getBytes(StandardCharsets.UTF_8));
@@ -78,7 +77,7 @@ public class Logger {
     public void close() throws IOException {
         
         if (isClosed) {
-            throw new IOException("Cannot close closed logger"); //TODO upon name change, change the message
+            throw new IOException("Cannot close closed output manager");
         }
 
         this.lock.release();

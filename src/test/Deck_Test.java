@@ -34,7 +34,7 @@ public class Deck_Test {
     @Test
     public void constructorTest() {
         int[] deck1 = this.testDeck;
-        assertDoesNotThrow(() -> new Deck(deck1).closeLogger());
+        assertDoesNotThrow(() -> new Deck(deck1).finalDeckLog());
     }
 
 
@@ -46,8 +46,8 @@ public class Deck_Test {
     public void deckLengthTest() {
         int[] deck1 = {1, 2, 3};
         int[] deck2 = {1, 2, 3, 4, 5};
-        assertThrows(DeckLengthException.class, () -> new Deck(deck1).closeLogger());
-        assertThrows(DeckLengthException.class, () -> new Deck(deck2).closeLogger());
+        assertThrows(DeckLengthException.class, () -> new Deck(deck1).finalDeckLog());
+        assertThrows(DeckLengthException.class, () -> new Deck(deck2).finalDeckLog());
     }
 
 
@@ -58,7 +58,7 @@ public class Deck_Test {
     @Test
     public void cardTest() {
         int[] deck1 = {0, 0, 0, 0};
-        assertThrows(InvalidCardException.class, () -> new Deck(deck1).closeLogger());
+        assertThrows(InvalidCardException.class, () -> new Deck(deck1).finalDeckLog());
     }
 
 
@@ -90,8 +90,8 @@ public class Deck_Test {
 
         assertEquals(deck1ID+1, deck2ID);
 
-        deck1.closeLogger();
-        deck2.closeLogger();
+        deck1.finalDeckLog();
+        deck2.finalDeckLog();
     }
 
 
@@ -106,14 +106,14 @@ public class Deck_Test {
         // Creates a deck so we can find the current ID number we are working with
         Deck deck1 = new Deck(this.testDeck);
         int currentID = deck1.getDeckID();
-        deck1.closeLogger();
+        deck1.finalDeckLog();
 
         // Deletes the output file that the next deck will generate if it exists
         File logFile = new File(String.format("deck%d_output.txt", ++currentID));
         logFile.delete();
 
         Deck deck2 = new Deck(this.testDeck);
-        deck2.closeLogger();
+        deck2.finalDeckLog();
 
         assert(logFile.exists());
     }
@@ -129,7 +129,7 @@ public class Deck_Test {
 
         Deck deck1 = new Deck(this.testDeck);
         int deck1ID = deck1.getDeckID();
-        deck1.closeLogger();
+        deck1.finalDeckLog();
 
         File file1 = new File(String.format("deck%d_output.txt", deck1ID));
         Scanner reader1 = new Scanner(file1);
@@ -153,7 +153,7 @@ public class Deck_Test {
 
         assert(Arrays.equals(this.testDeck, actualDeck));
 
-        deck1.closeLogger();
+        deck1.finalDeckLog();
     }
 
 
@@ -172,7 +172,7 @@ public class Deck_Test {
         indexOfMethod.setAccessible(true);
         indexOfMethod.invoke(deck1);
         // This also logs but is required other the scanner cannot access the file
-        deck1.closeLogger();
+        deck1.finalDeckLog();
 
         // Checks that there has been a log and that the closure log also went through
         File file1 = new File(String.format("deck%d_output.txt", deck1ID));
@@ -208,8 +208,8 @@ public class Deck_Test {
         // Safely closing decks without error
         deck1.removeCard();
         deck2.addCard(new Card(1));
-        deck1.closeLogger();
-        deck2.closeLogger();
+        deck1.finalDeckLog();
+        deck2.finalDeckLog();
     }
 
 
@@ -239,7 +239,7 @@ public class Deck_Test {
         assertEquals(array1[4].getCardValue(), testCardValue);
 
         deck1.removeCard();
-        deck1.closeLogger();
+        deck1.finalDeckLog();
     }
 
 
@@ -261,7 +261,7 @@ public class Deck_Test {
         assertEquals(queue1.size(), 3);
 
         deck1.addCard(new Card(1));
-        deck1.closeLogger();
+        deck1.finalDeckLog();
     }
 
 
@@ -273,10 +273,10 @@ public class Deck_Test {
     @Test
     public void doubleClosureTest() throws Exception {
         Deck deck1 = new Deck(this.testDeck);
-        deck1.closeLogger();
+        deck1.finalDeckLog();
 
         // Checks an error is raised upon second closure
-        Exception exception = assertThrows(IOException.class, () -> deck1.closeLogger());
+        Exception exception = assertThrows(IOException.class, () -> deck1.finalDeckLog());
         // Tests the correct error message is done
         String expectedMessage = "Cannot close closed deck";
         String actualMessage = exception.getMessage();
@@ -292,7 +292,7 @@ public class Deck_Test {
     @Test
     public void closedAddTest() throws Exception {
         Deck deck1 = new Deck(this.testDeck);
-        deck1.closeLogger();
+        deck1.finalDeckLog();
 
         Exception exception = assertThrows(IOException.class, () -> deck1.addCard(new Card(1)));
         String expectedMessage = "Cannot add to closed deck";
@@ -309,7 +309,7 @@ public class Deck_Test {
     @Test
     public void closedRemoveTest() throws Exception {
         Deck deck1 = new Deck(this.testDeck);
-        deck1.closeLogger();
+        deck1.finalDeckLog();
 
         Exception exception = assertThrows(IOException.class, () -> deck1.removeCard());
         String expectedMessage = "Cannot remove from closed deck";
@@ -333,7 +333,7 @@ public class Deck_Test {
         assertEquals(expectedMessage, actualMessage);
 
         deck1.removeCard();
-        deck1.closeLogger();
+        deck1.finalDeckLog();
     }
 
 
@@ -352,6 +352,6 @@ public class Deck_Test {
         assertEquals(expectedMessage, actualMessage);
 
         deck1.addCard(new Card(1));
-        deck1.closeLogger();
+        deck1.finalDeckLog();
     }
 }

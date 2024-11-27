@@ -7,7 +7,7 @@ import java.util.Queue;
 public class Deck {
     
     private Queue<Card> cardDeck;
-    private Logger logger;
+    private OutputManager outputManager;
     private static int nextDeckID = 1;
     private int deckID;
     private final int NUM_CARDS = 4;
@@ -32,7 +32,7 @@ public class Deck {
         // Setting up object
         this.cardDeck = new LinkedList<Card>();
         this.deckID = Deck.nextDeckID++;
-        this.logger = new Logger(String.format("deck%d_output.txt", deckID));
+        this.outputManager = new OutputManager(String.format("deck%d_output.txt", deckID));
 
         // Filling object with Card objects
         for (int initialCard: initialDeck) {
@@ -73,14 +73,14 @@ public class Deck {
 
         int[] cardDeckArray = this.getContents();
 
-        StringBuilder output = new StringBuilder();
+        StringBuilder message = new StringBuilder();
 
-        output.append(String.format("deck%d contents:", deckID));
+        message.append(String.format("deck%d contents:", deckID));
         for (int card : cardDeckArray) {
-            output.append(String.format(" %d", card));
+            message.append(String.format(" %d", card));
         }
 
-        this.logger.log(output.toString());
+        this.outputManager.output(message.toString());
     }
 
 
@@ -126,14 +126,14 @@ public class Deck {
      * Closes the logger used internally
      * @throws IOException
      */
-    public void closeLogger() throws IOException, DeckLengthException{
+    public void finalDeckLog() throws IOException, DeckLengthException{
         if (isClosed) {
             throw new IOException("Cannot close closed deck");
         }
         try {
             this.logDeck();
         } finally {
-            this.logger.close();
+            this.outputManager.close();
             this.isClosed = true;
         }
     }
@@ -153,6 +153,6 @@ public class Deck {
         Deck oops = new Deck(rizz);
         oops.removeCard();
         oops.addCard(new Card(9));
-        oops.closeLogger();
+        oops.finalDeckLog();
     }
 }

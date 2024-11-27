@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import java.io.File;
 
-import main.Logger;
+import main.OutputManager;
 
 import java.io.IOException;
 import java.nio.channels.OverlappingFileLockException;
@@ -16,7 +16,7 @@ import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.BeforeAll;
 
-public class Logger_Test {
+public class OutputManager_Test {
 
     private String filename = "test.txt";
     private String testMessage1 = "Testing Testing 123";
@@ -40,21 +40,21 @@ public class Logger_Test {
     @DisplayName("Basic Constructor Check")
     @Test
     public void constructorTest() {
-        assertDoesNotThrow(() -> new Logger("temp.txt").close());
+        assertDoesNotThrow(() -> new OutputManager("temp.txt").close());
     }
 
 
     /**
-     * Checks that locks prevent other loggers from accessing the same file
+     * Checks that locks prevent other OutputManagers from accessing the same file
      * @throws IOException
      */
     @DisplayName("Basic Locking Check")
     @Test
     public void lockingTest() throws IOException{
 
-        Logger logger1 = new Logger(this.filename);
-        assertThrows(OverlappingFileLockException.class, () -> new Logger(this.filename).close());
-        logger1.close();
+        OutputManager outputManager1 = new OutputManager(this.filename);
+        assertThrows(OverlappingFileLockException.class, () -> new OutputManager(this.filename).close());
+        outputManager1.close();
     }
 
     
@@ -67,9 +67,9 @@ public class Logger_Test {
     public void clearTest() throws IOException {
 
         // Adding text
-        Logger logger1 = new Logger(this.filename);
-        logger1.log(this.testMessage1);
-        logger1.close();
+        OutputManager outputManager1 = new OutputManager(this.filename);
+        outputManager1.output(this.testMessage1);
+        outputManager1.close();
 
         // Check there is text before clearing
         File file1 = new File(filename);
@@ -78,8 +78,8 @@ public class Logger_Test {
         reader1.close();
 
         // Clearing text
-        Logger logger2 = new Logger(this.filename);
-        logger2.close();
+        OutputManager outputManager2 = new OutputManager(this.filename);
+        outputManager2.close();
 
         // Check there is no text after clearing
         File file2 = new File(this.filename);
@@ -99,9 +99,9 @@ public class Logger_Test {
     public void writeCheck() throws IOException {
 
         // Adding text
-        Logger logger1 = new Logger(this.filename);
-        logger1.log(this.testMessage1);
-        logger1.close();
+        OutputManager outputManager1 = new OutputManager(this.filename);
+        outputManager1.output(this.testMessage1);
+        outputManager1.close();
 
         // Check if text is what was written
         File file1 = new File(this.filename);
@@ -121,9 +121,9 @@ public class Logger_Test {
     public void newLineTest() throws IOException {
         
         // Writes two new lines which will allow Scanner to successfully read one line
-        Logger logger1 = new Logger(this.filename);
-        logger1.log("\n");
-        logger1.close();
+        OutputManager outputManager1 = new OutputManager(this.filename);
+        outputManager1.output("\n");
+        outputManager1.close();
 
         File file1 = new File(this.filename);
         Scanner reader1 = new Scanner(file1);
@@ -134,7 +134,7 @@ public class Logger_Test {
 
 
     /**
-     * Checks that seperate logs on the same logger do NOT overwrite each other
+     * Checks that seperate logs on the same OutputManager do NOT overwrite each other
      * @throws IOException
      */
     @DisplayName("Overwriting Check")
@@ -143,10 +143,10 @@ public class Logger_Test {
 
         String actualMessage;
         
-        Logger logger1 = new Logger(this.filename);
-        logger1.log(this.testMessage1);
-        logger1.log(this.testMessage2);
-        logger1.close();
+        OutputManager outputManager1 = new OutputManager(this.filename);
+        outputManager1.output(this.testMessage1);
+        outputManager1.output(this.testMessage2);
+        outputManager1.close();
         
 
         File file1 = new File(this.filename);
@@ -160,49 +160,49 @@ public class Logger_Test {
 
 
     /**
-     * Checks closing the logger causes no error
+     * Checks closing the OutputManager causes no error
      * @throws IOException
      */
     @DisplayName("Basic Closure Check")
     @Test
     public void closureTest() throws IOException {
         
-        Logger logger1 = new Logger(this.filename);
-        assertDoesNotThrow(() -> logger1.close());
+        OutputManager outputManager1 = new OutputManager(this.filename);
+        assertDoesNotThrow(() -> outputManager1.close());
     }
 
     
     /**
-     * Checks file is unlocked after closing a logger
+     * Checks file is unlocked after closing a OutputManager
      * @throws IOException
      */
     @DisplayName("Lock Release Check")
     @Test
     public void lockReleaseTest() throws IOException {
 
-        Logger logger1 = new Logger(this.filename);
-        logger1.close();
+        OutputManager outputManager1 = new OutputManager(this.filename);
+        outputManager1.close();
 
-        assertDoesNotThrow(() -> new Logger(this.filename).close());
+        assertDoesNotThrow(() -> new OutputManager(this.filename).close());
     }
 
 
     /**
-     * Checks the correct error message is thrown when attemped to log with a closed logger
+     * Checks the correct error message is thrown when attemped to log with a closed OutputManager
      * @throws IOException
      */
     @DisplayName("Closed Write Check")
     @Test
-    public void closedLoggerWriteTest() throws IOException {
+    public void closedOutputManagerWriteTest() throws IOException {
 
         // Check if logging is functional
-        Logger logger1 = new Logger(this.filename);
-        assertDoesNotThrow(() -> logger1.log(this.testMessage1));
-        logger1.close();
+        OutputManager outputManager1 = new OutputManager(this.filename);
+        assertDoesNotThrow(() -> outputManager1.output(this.testMessage1));
+        outputManager1.close();
         
         // Check that the correct error is raised
-        Exception exception = assertThrows(IOException.class, () -> logger1.log(this.testMessage2));
-        String expectedMessage = "Cannot write to closed logger";
+        Exception exception = assertThrows(IOException.class, () -> outputManager1.output(this.testMessage2));
+        String expectedMessage = "Cannot write to closed OutputManager";
         String actualMessage = exception.getMessage();
         assertEquals(expectedMessage, actualMessage);
 
@@ -217,7 +217,7 @@ public class Logger_Test {
 
     /**
      * Checks that when no file is present, 
-     * the logger is able to create a file without error
+     * the OutputManager is able to create a file without error
      */
     @DisplayName("No File Check")
     @Test
@@ -229,7 +229,7 @@ public class Logger_Test {
             file1.delete();
         }
         
-        assertDoesNotThrow(() -> new Logger(this.filename).close());
+        assertDoesNotThrow(() -> new OutputManager(this.filename).close());
 
         File file2 = new File(this.filename);
         assert file2.exists();
@@ -238,16 +238,16 @@ public class Logger_Test {
 
 
     /**
-     * Checks that closing an already closed logger will raise the correct error
+     * Checks that closing an already closed OutputManager will raise the correct error
      * @throws IOException
      */
     @DisplayName("Double Close Check")
     @Test
     public void doubleCloseTest() throws IOException {
-        Logger logger1 = new Logger(this.filename);
-        logger1.close();
-        Exception exception = assertThrows(IOException.class, () -> logger1.close());
-        String expectedMessage = "Cannot close closed logger";
+        OutputManager outputManager1 = new OutputManager(this.filename);
+        outputManager1.close();
+        Exception exception = assertThrows(IOException.class, () -> outputManager1.close());
+        String expectedMessage = "Cannot close closed OutputManager";
         String actualMessage = exception.getMessage();
         assertEquals(expectedMessage, actualMessage);
     }
@@ -256,16 +256,16 @@ public class Logger_Test {
     @DisplayName("Null Filename Check")
     @Test
     public void nullFilenameTest() {
-        assertThrows(NullPointerException.class, () -> new Logger(null));
+        assertThrows(NullPointerException.class, () -> new OutputManager(null));
     }
 
 
     @DisplayName("Null Message Check")
     @Test
     public void nullMessageTest() throws IOException{
-        Logger logger1 = new Logger(this.filename);
-        assertThrows(NullPointerException.class, () -> logger1.log(null));
-        logger1.close();
+        OutputManager outputManager1 = new OutputManager(this.filename);
+        assertThrows(NullPointerException.class, () -> outputManager1.output(null));
+        outputManager1.close();
     }
 
 }
