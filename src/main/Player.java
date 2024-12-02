@@ -1,14 +1,19 @@
 package main;
 
 import java.io.IOException;
+import java.util.Random;
 
-public class Player extends Thread{
+public class Player implements Runnable {
 
     private static int nextPlayerID = 1;
     private int playerID;
     private final int NUM_CARDS = 4;
     private Card[] hand = new Card[NUM_CARDS + 1];
-    OutputManager outputManager;
+    private OutputManager outputManager;
+    private volatile Boolean[] winCheckArray;
+    private Deck pickUpDeck;
+    private Deck discardDeck;
+    public static volatile boolean flag = false;
 
 
     /**
@@ -18,17 +23,22 @@ public class Player extends Thread{
      * @throws InvalidCardException
      * @throws IOException
      */
-    public Player(int[] initialHand) throws HandLengthException, InvalidCardException, IOException {
+    public Player(int[] initialHand, Boolean[] winCheckArray, Deck pickUpDeck, Deck discardDeck) throws HandLengthException, InvalidCardException, IOException {
         if (initialHand == null) {
             throw new NullPointerException();
         } else if (initialHand.length != NUM_CARDS) {
             throw new HandLengthException("Initial hand length must be of length 4");
         }
 
+        this.winCheckArray = winCheckArray;
+
         // Array starts off filled with null values so last element in array is null
         for (int i=0; i < NUM_CARDS; i++) {
             this.hand[i] = new Card(initialHand[i]);
         }
+
+        this.pickUpDeck = pickUpDeck;
+        this.discardDeck = discardDeck;
 
         playerID = Player.nextPlayerID++;
         outputManager = new OutputManager(String.format("player%d_output.txt", playerID));
@@ -91,7 +101,7 @@ public class Player extends Thread{
     }
 
 
-    public void PickUp(Deck pickupDeck) throws HandLengthException, DeckLengthException, IOException {
+    public void pickUp() throws HandLengthException, DeckLengthException, IOException {
         int counter = 0;
         isOneNull();
         
@@ -99,8 +109,9 @@ public class Player extends Thread{
             counter++;
         }
 
-        Card newCard = pickupDeck.removeCard();
+        Card newCard = this.pickUpDeck.removeCard();
 
+        // Weighting reset for new card
         newCard.setWeighting(newCard.getCardValue() == this.playerID);
         this.hand[counter] = newCard;
 
@@ -109,7 +120,7 @@ public class Player extends Thread{
 
         message.append(String.format("player %d ", this.playerID));
         message.append(String.format("draws a %d ", newCard.getCardValue()));
-        message.append(String.format("from deck %d", pickupDeck.getDeckID()));
+        message.append(String.format("from deck %d", this.pickUpDeck.getDeckID()));
 
         this.outputManager.output(message.toString());
     }
@@ -127,14 +138,118 @@ public class Player extends Thread{
         }
     }
 
+    
+    private int getDiscardCardIndex() {
 
-    public void run() {}
+        Random randomObject = new Random();
 
+        int total = 0;
+        for (Card card : this.hand) {
+            if (card != null) {
+                total += card.getWeighting();
+            }
+        }
+
+        // Adds one as the lowest value should be 1
+        int randomNum = randomObject.nextInt(total) + 1;
+
+        int index = -1;
+        while (randomNum > 0) {
+            if (this.hand[++index] != null) {
+                randomNum -= this.hand[index].getWeighting();
+            }
+        }
+
+        return index;
+    }
+
+
+    public Card discard() throws DeckLengthException, IOException {
+        int index = getDiscardCardIndex();
+
+        // Takes card 
+        Card discardCard = this.hand[index];
+        this.hand[index] = null;
+        this.discardDeck.addCard(discardCard);
+
+        // Increments weighting for all leftover cards
+        for (Card card : this.hand) {
+            if (card != null) {
+                card.incrementWeighting();
+            }
+        }
+
+        // Logs card discard
+        StringBuilder message = new StringBuilder();
+
+        message.append(String.format("player %d ", this.playerID));
+        message.append(String.format("discards a %d ", discardCard.getCardValue()));
+        message.append(String.format("to deck %d", this.discardDeck.getDeckID()));
+
+        this.outputManager.output(message.toString());
+
+        return discardCard;
+    }
+
+
+    public boolean isWinCheckArrayFull() {
+        for (Boolean value : this.winCheckArray) {
+            if (value == null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    public void clearFalses() {
+
+        for (int i = 0; i < this.winCheckArray.length; i++) {
+            if (this.winCheckArray[i] == false) {
+                this.winCheckArray[i] = null;
+            }
+        }
+    }
+
+    //private int get
+
+
+    public void run() {
+
+        while (true) {
+            winCheckArray[playerID-1] = (Boolean) winCheck();
+            System.out.println(String.format("winCheck %d", this.playerID));
+            if (!isWinCheckArrayFull()) {
+                try {
+                    System.out.println(String.format("eepy %d", this.playerID));
+                    Thread.sleep(99999); //TODO Change
+                } catch (InterruptedException e) {
+                    System.out.println(String.format("caught %d", this.playerID));
+
+                }
+            } else {
+                System.out.println(String.format("true flag %d", this.playerID));
+                flag = true;
+            }
+            System.out.println(String.format("pick disc %d", this.playerID));
+            try {
+                this.pickUp();
+                this.discard();
+            } catch (Exception e) {
+                System.out.println("poo");
+                System.out.println(e.getMessage());
+            }
+            System.out.println(String.format("end %d", this.playerID));
+        }
+
+    }
+
+    //TODO remove
     public static void main(String[] args) throws HandLengthException, InvalidCardException, IOException {
 
         int[] rizzler = {1, 2, 3, 4};
-        Player oops = new Player(rizzler);
-        oops.logCards();
-        oops.finalPlayerLog();
+        //Player oops = new Player();
+        //oops.logCards();
+        //oops.finalPlayerLog();
     }
 }
