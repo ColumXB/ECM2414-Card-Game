@@ -6,6 +6,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Player implements Runnable {
 
@@ -15,12 +17,13 @@ public class Player implements Runnable {
     private Card[] hand = new Card[NUM_CARDS + 1];
     private OutputManager outputManager;
     private volatile Boolean[] winCheckArray;
-    private volatile Integer winningPlayerId;
+    private AtomicInteger winningPlayerId;
     private Deck pickUpDeck;
     private Deck discardDeck;
-    public static volatile boolean flag = false;
+
     //TODO remove
     DateTimeFormatter myDateObject = DateTimeFormatter.ofPattern("HH:mm:ss");
+    public boolean poop;
 
     /**
      * Constructor for Player
@@ -32,7 +35,7 @@ public class Player implements Runnable {
      * @throws InvalidCardException
      * @throws IOException
      */
-    public Player(int[] initialHand, Boolean[] winCheckArray, Integer winningPlayerId, Deck pickUpDeck, Deck discardDeck) throws HandLengthException, InvalidCardException, IOException {
+    public Player(int[] initialHand, Boolean[] winCheckArray, AtomicInteger winningPlayerId, Deck pickUpDeck, Deck discardDeck) throws HandLengthException, InvalidCardException, IOException {
 
         if (initialHand == null) {
             throw new NullPointerException();
@@ -284,7 +287,12 @@ public class Player implements Runnable {
         
         
         this.hand[index] = null;
-        this.discardDeck.addCard(discardCard);
+        try{
+            this.discardDeck.addCard(discardCard);
+        } catch (IOException e) {
+            System.out.println("addcard()");
+            throw e;
+        }
 
         // Increments weighting for all leftover cards
         for (Card card : this.hand) {
@@ -293,50 +301,69 @@ public class Player implements Runnable {
             }
         }
         //TODO remove 
-        this.outputManager.output(LocalDateTime.now().format(this.myDateObject));
+        try{this.outputManager.output(LocalDateTime.now().format(this.myDateObject));
+        } catch (IOException e) {
+            System.out.println("outputdate");
+            throw e;
+        }
+        
         // Logs card discard
         StringBuilder message = new StringBuilder();
 
         message.append(String.format("player %d ", this.playerID));
         message.append(String.format("discards a %d ", discardCard.getCardValue()));
         message.append(String.format("to deck %d", this.discardDeck.getDeckID()));
-
+        try {
         this.outputManager.output(message.toString());
+        } catch (IOException e) {
+            System.out.println("outputmanager");
+            throw e;
+        }
   
         return discardCard;
     }
 
     public void run() {
+
+        poop = false;
+
+        // Publishes results
         this.winCheckArray[playerID-1] = (Boolean) winCheck();
+        // Waits for other results
         try {
-            //Thread.sleep(1000);
-            while (!Thread.interrupted()) {}
-        } catch (Exception e) {
-            System.out.println("Interrupted");
-        }
-        while (this.winningPlayerId == 0) {
-            System.out.println("bad");
+            while (!Thread.interrupted()) {
+                TimeUnit.MILLISECONDS.sleep(1);
+                }
+        } catch (Exception e) {}
+        
+        // Checks for other results
+        while (this.winningPlayerId.get() == 0) {
             try{
                 this.pickUp();
+                System.out.println("pickup " + playerID);
                 this.discard();
+                System.out.println("discard " + playerID);
                 this.logCards();
+                System.out.println("log cards " + playerID);
             } catch (HandLengthException e) {
                 //TODO log handlengthexception
-                //System.out.println("Handlengthexception"); //TODO here
+                System.out.println("Handlengthexception"); //TODO here
             } catch (DeckLengthException e) { 
                 //TODO log Decklengthexception
                 System.out.println("Decklengthexception");
             } catch (IOException e) {
                 //TODO log IOexception
-                System.out.println("IOexception");
+                System.out.println("IOexception " + playerID); //TODO here
             }
+
+            // Publishes results
             this.winCheckArray[playerID-1] = (Boolean) winCheck();
+            // Wait for interrupt
             try {
-                System.out.println("eep");
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                System.out.println("poop");
-            }
+                while (!Thread.interrupted()) {
+                    TimeUnit.MILLISECONDS.sleep(1);
+                }
+            } catch (InterruptedException e) {}
         }
     }
 
