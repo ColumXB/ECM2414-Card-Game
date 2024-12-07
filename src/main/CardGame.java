@@ -1,8 +1,11 @@
 package main;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class CardGame {
+
+    public static AtomicInteger winningPlayerId;
 
     public static class Utility{
         /**
@@ -43,7 +46,11 @@ public class CardGame {
             output.append("[");
             for (Boolean element : array) {
                 output.append(" ");
-                output.append(element.toString());
+                if (element == null) {
+                    output.append("null");
+                } else {
+                    output.append(element.toString());
+                } 
             }
             output.append(" ]");
             System.out.println(output.toString());
@@ -65,7 +72,8 @@ public class CardGame {
         Deck[] deckArray = new Deck[numPlayers];
         Player[] playerArray = new Player[numPlayers];
         Thread[] threadArray = new Thread[numPlayers];
-        Integer winningPlayerId = 0;
+        winningPlayerId = new AtomicInteger();
+        winningPlayerId.set(0);
         Boolean[] winCheckArray = new Boolean[numPlayers];
 
         //TODO remove
@@ -91,6 +99,7 @@ public class CardGame {
                 }
                 playerArray[i] = new Player(gameArray[0][i], winCheckArray, winningPlayerId, deckArray[i], deckArray[discardDeckIndex]);
                 threadArray[i] = new Thread(playerArray[i]);
+                System.out.println(i+ " " + discardDeckIndex);
             }
         } catch (Exception e) {
             throw new Exception("oh no!");
@@ -101,15 +110,28 @@ public class CardGame {
             thread.start();
         }
 
+        TimeUnit.SECONDS.sleep(5);
+
         //game loop
-        System.out.println(winningPlayerId);
-        try { //TODO wincheck, player (GAME LOOP!)(maybe event listeners)
-            while (winningPlayerId == 0) {
+        try {
+            // Check for all results
+            while (winningPlayerId.get() == 0) {
+
+                // Wait for array to fill with results
                 Utility.printArray(winCheckArray);
-                while (!Utility.isWinCheckArrayFull(winCheckArray)) {}
+                while (!Utility.isWinCheckArrayFull(winCheckArray)) {
+                    TimeUnit.MILLISECONDS.sleep(1);
+                }
                 Utility.printArray(winCheckArray);
-                winningPlayerId = Utility.findWinningIndex(winCheckArray)+1;
+
+                // Pull first winning results
+                winningPlayerId.set(Utility.findWinningIndex(winCheckArray));
+                winningPlayerId.getAndIncrement();
+
+                // Clear the array
                 Utility.clearArray(winCheckArray);
+
+                // Start players again
                 for (Thread thread : threadArray) {
                     thread.interrupt();
                 }
@@ -117,9 +139,9 @@ public class CardGame {
             }
         } finally {
             for (int i = 0; i<numPlayers; i++) {
-                System.out.println(i);
+                System.out.println("final winningPlayerId: " + winningPlayerId);
                 deckArray[i].finalDeckLog();
-                playerArray[i].finalPlayerLog(winningPlayerId);
+                playerArray[i].finalPlayerLog(winningPlayerId.get());
             }
         }
     }
