@@ -2,6 +2,7 @@ package main;
 import java.io.File;
 import java.util.Scanner;
 import java.io.FileNotFoundException;
+import java.util.Arrays;
 import java.util.InputMismatchException;
 
 public class PackHandler {
@@ -10,6 +11,11 @@ public class PackHandler {
     private int packSize; 
     String filePath; //text file holding the values that will be used for pack
     private int[] pack;
+    private int[][] playerPacks;
+    private int[][] deckPacks;
+    private int[][] playerPacksArray;
+    private int[][] deckPacksArray;
+    private int[][][] gameArray;
 
     /**
      * prints prompts to terminal expecting inputs used in creating/validating the pack
@@ -203,12 +209,69 @@ public class PackHandler {
         this.packSize = packSize;
     }
 
+    public int[][][] packSplitter(int[] pack) {
+        if (pack.length != numPlayers * 8) {
+            throw new IllegalArgumentException("Pack size must be 8 times the number of players.");
+        }
+
+        //initialise packs
+        playerPacks = new int[numPlayers][4];
+        deckPacks = new int[numPlayers][4];
+        playerPacksArray = new int[numPlayers][4];
+        deckPacksArray = new int[numPlayers][4];
+        gameArray = new int[2][][];
+
+        // Split full pack array
+        int middleOfPack = pack.length / 2;
+        int[] fullPlayerPack = Arrays.copyOfRange(pack, 0, middleOfPack);
+        int[] fullDeckPack = Arrays.copyOfRange(pack, middleOfPack, pack.length);
+
+        // Round-robin distribution for packs
+        distributePack(fullPlayerPack, playerPacks);
+        distributePack(fullDeckPack, deckPacks);
+
+        // Group the individual packs into the respective arrays
+        groupPacks(playerPacks, playerPacksArray);
+        groupPacks(deckPacks, deckPacksArray);
+
+        // Create the final gameArray which is a two-part array
+        gameArray[0] = playerPacksArray; // Group 1: Players
+        gameArray[1] = deckPacksArray;   // Group 2: Decks
+
+        return gameArray;
+    }
+
+    //distribute pack elements into player/deck packs
+    private void distributePack(int[] fullPack, int[][] packs) {
+        for (int i = 0; i < fullPack.length; i++) {
+            int targetPack = i % numPlayers;  // Which player pack to put the element in
+            int position = i / numPlayers;    // Position in the target pack
+            packs[targetPack][position] = fullPack[i];
+        }
+    }
+
+    //group packs into array
+    private void groupPacks(int[][] packs, int[][] packsArray) {
+        for (int i = 0; i < numPlayers; i++) {
+            packsArray[i] = packs[i];  // Group the packs into the array
+        }
+    }
+
     /**
      * @return pack size
      */
     public int getPackSize() {
         return this.packSize;
     }
+
+    /**
+     * 
+     * @return GameArray
+     */
+    public int[][][] getGameArray() {
+        return packSplitter(pack);
+    }
+
 
     public static void main(String[] args) {
 
@@ -219,5 +282,45 @@ public class PackHandler {
             System.out.print(singularOop);
             System.out.print(",");
         }
+        PackSplitterPrinter.printer(oops.packSplitter(oops.pack));
+        
     }
+
+    //--------------------------------------------
+    /*// Print results
+    System.out.println("\nFull Player Pack: " + Arrays.toString(fullPlayerPack));
+    System.out.println("Full Deck Pack: " + Arrays.toString(fullDeckPack));
+    printPacks("Player Pack", playerPacks);
+    printPacks("Deck Pack", deckPacks);
+    printGroupedPacks("Player Packs Array", playerPacksArray);
+    printGroupedPacks("Deck Packs Array", deckPacksArray);
+    printGameArray();
+
+    //print the individual packs
+    private void printPacks(String packName, int[][] packs) {
+        for (int i = 0; i < numPlayers; i++) {
+            System.out.println(packName + " " + (i + 1) + ": " + Arrays.toString(packs[i]));
+        }
+    }
+
+    //print the grouped packs
+    private void printGroupedPacks(String packName, int[][] packsArray) {
+        System.out.println(packName + ":");
+        for (int i = 0; i < numPlayers; i++) {
+            System.out.println(Arrays.toString(packsArray[i]));
+        }
+    }
+
+    private void printGameArray(int[][][] gameArray) {
+        System.out.println("Game Array:");
+        System.out.println("Players:");
+        for (int i = 0; i < gameArray[0].length; i++) {
+            System.out.println("  Player Pack " + (i + 1) + ": " + Arrays.toString(gameArray[0][i]));
+        }
+
+        System.out.println("Decks:");
+        for (int i = 0; i < gameArray[1].length; i++) {
+            System.out.println("  Deck Pack " + (i + 1) + ": " + Arrays.toString(gameArray[1][i]));
+        }
+    }*/
 }
