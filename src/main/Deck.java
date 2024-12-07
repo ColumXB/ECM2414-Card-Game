@@ -3,6 +3,7 @@ package main;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.stream.Collectors;
 
 public class Deck {
     
@@ -47,7 +48,7 @@ public class Deck {
      * @return Array of the numbers of the cards in the deck
      * @throws DeckLengthException Deck length must be 4 to get the contents
      */
-    private int[] getContents() throws DeckLengthException {
+    public int[] getContents() throws DeckLengthException {
 
         if (this.cardDeck.size() != NUM_CARDS) {
             throw new DeckLengthException("Deck length must be 4 when collecting");
@@ -61,6 +62,13 @@ public class Deck {
             intDeckArray[i] = cardDeckArray[i].getCardValue();
         }
         return intDeckArray;
+    }
+
+    //TODO test getter for now (to be removed)
+    public String getTestDeckContents() {
+        return cardDeck.stream()
+                       .map(card -> String.valueOf(card.getCardValue())) // Use getCardValue()
+                       .collect(Collectors.joining(", ", "[", "]")); // Format as a list
     }
 
 
@@ -93,6 +101,7 @@ public class Deck {
     public void addCard(Card newCard) throws DeckLengthException, IOException {
 
         if (isClosed) {
+            System.out.println("closed");
             throw new IOException("Cannot add to closed deck");
         } else if (this.cardDeck.size() >= NUM_CARDS + 1) {
             throw new DeckLengthException("Deck contains too many cards (5 or more)");
@@ -113,6 +122,7 @@ public class Deck {
         if (isClosed) {
             throw new IOException("Cannot remove from closed deck");
         } else if (this.cardDeck.size() <= NUM_CARDS - 1) {
+            System.out.println(String.format("Current Deck Size " + this.cardDeck.size()));
             throw new DeckLengthException("Deck contains too little cards (3 or less)");
         }
 
