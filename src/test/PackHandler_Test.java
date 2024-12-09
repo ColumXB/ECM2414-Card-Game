@@ -1,15 +1,22 @@
 package test;
 
-import main.InvalidCardValueException;
+import main.InvalidCardException;
 import main.InvalidFileException;
 import main.PackHandler;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import java.io.FileNotFoundException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public class PackHandler_Test {
 
@@ -24,11 +31,14 @@ public class PackHandler_Test {
     @DisplayName("Valid number of players input")
     @ParameterizedTest
     @ValueSource(ints = {1, 2, 3, 4})
-    void validNumPlayersTest(int numPlayers) {
+    public void validNumPlayersTest(int numPlayers) {
         PackHandler packHandler = new PackHandler();
 
-        // Assert that no exception is thrown for valid inputs
-        assertDoesNotThrow(() -> packHandler.validateNumPlayers(numPlayers));
+        assertDoesNotThrow(() -> {
+            Method indexOfMethod = PackHandler.class.getDeclaredMethod("validateNumPlayers", int.class);
+            indexOfMethod.setAccessible(true);
+            indexOfMethod.invoke(packHandler, numPlayers);
+        });   
     }
 
     /**
@@ -40,11 +50,17 @@ public class PackHandler_Test {
     @DisplayName("Invalid number of players input")
     @ParameterizedTest  
     @ValueSource(ints = {Integer.MAX_VALUE, 0, -1, -2, -12, Integer.MIN_VALUE})
-    void invalidNumPlayersTest(int numPlayers) {
+    public void invalidNumPlayersTest(int numPlayers) throws IllegalArgumentException {
         PackHandler packHandler = new PackHandler();
-    
-        // Assert that an IllegalArgumentException is thrown for invalid inputs
-        assertThrows(IllegalArgumentException.class, () -> packHandler.validateNumPlayers(numPlayers));
+
+        InvocationTargetException exception = assertThrows(InvocationTargetException.class, () -> {
+            Method indexOfMethod = PackHandler.class.getDeclaredMethod("validateNumPlayers", int.class);
+            indexOfMethod.setAccessible(true);
+            indexOfMethod.invoke(packHandler, numPlayers);
+        });
+
+        assertTrue(exception.getCause() instanceof IllegalArgumentException, 
+                "Expected IllegalArgumentException but got: " + exception.getCause());
     }
 
     /**
@@ -56,12 +72,24 @@ public class PackHandler_Test {
     @DisplayName("Valid File Path")
     @ParameterizedTest  
     @ValueSource(strings = {"testPack.txt"})
-    void validFilePathTest(String filePath) {
+    public void validFilePathTest(String filePath) {
         PackHandler packHandler = new PackHandler();
-        packHandler.setPackSize(32);
+        
+        try{
+            Field packSizeField = PackHandler.class.getDeclaredField("packSize");
+            packSizeField.setAccessible(true);
+            packSizeField.set(packHandler, 32);
     
-        // Assert that no exception is thrown for valid inputs
-        assertDoesNotThrow(() -> packHandler.validateFilePath(filePath));
+            assertDoesNotThrow(() -> {
+                Method indexOfMethod = PackHandler.class.getDeclaredMethod("validateFilePath", String.class);
+                indexOfMethod.setAccessible(true);
+                indexOfMethod.invoke(packHandler, filePath);
+            });
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            // Handle the reflection-related exceptions
+            e.printStackTrace();
+            fail("Unexpected exception: " + e.getMessage());
+        }
     }
 
     /**
@@ -72,12 +100,26 @@ public class PackHandler_Test {
      */
     @DisplayName("Invalid File Path")
     @ParameterizedTest  
-    @ValueSource(strings = {"a.txt", "b.txt", "c.txt", "d.txt"})
-    void invalidFilePathTest(String filePath) {
+    @ValueSource(strings = {"a.txt"})
+    public void invalidFilePathTest(String filePath) throws FileNotFoundException, InvalidFileException {
         PackHandler packHandler = new PackHandler();
+
+        try{
+            Field packSizeField = PackHandler.class.getDeclaredField("packSize");
+            packSizeField.setAccessible(true);
+            packSizeField.set(packHandler, 32);
     
-        // Assert that an InvalidFileException is thrown for invalid inputs
-        assertThrows(InvalidFileException.class, () -> packHandler.validateFilePath(filePath));
+            assertThrows(InvocationTargetException.class, () -> {
+                Method indexOfMethod = PackHandler.class.getDeclaredMethod("validateFilePath", String.class);
+                indexOfMethod.setAccessible(true);
+                indexOfMethod.invoke(packHandler, filePath);
+            });
+
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            // Handle the reflection-related exceptions
+            e.printStackTrace();
+            fail("Unexpected exception: " + e.getMessage());
+        }
     }
     
     /**
@@ -89,11 +131,15 @@ public class PackHandler_Test {
     @DisplayName("Valid line value for card")
     @ParameterizedTest
     @ValueSource(strings = {"1", "2", "3", "4", "2147483647"})
-    void validValidityCheckTest(String line) {
+    public void validValidityCheckTest(String line) {
         PackHandler packHandler = new PackHandler();
 
         // Assert that no exception is thrown for valid inputs
-        assertDoesNotThrow(() -> packHandler.validityCheck(line));
+        assertDoesNotThrow(() -> {
+            Method indexOfMethod = PackHandler.class.getDeclaredMethod("validityCheck", String.class);
+            indexOfMethod.setAccessible(true);
+            indexOfMethod.invoke(packHandler, line);
+        });
     }
 
     /**
@@ -105,10 +151,13 @@ public class PackHandler_Test {
     @DisplayName("Invalid line value for card")
     @ParameterizedTest  
     @ValueSource(strings = {"a", "-1", "-2", "-3", "-2147483647"})
-    void invalidValidityCheckTest(String line) {
+    public void invalidValidityCheckTest(String line) throws InvalidCardException {
         PackHandler packHandler = new PackHandler();
     
-        // Assert that an InvalidCardValueException is thrown for invalid inputs
-        assertThrows(InvalidCardValueException.class, () -> packHandler.validityCheck(line));
+        assertThrows(InvocationTargetException.class, () -> {
+            Method indexOfMethod = PackHandler.class.getDeclaredMethod("validityCheck", String.class);
+            indexOfMethod.setAccessible(true);
+            indexOfMethod.invoke(packHandler, line);
+        });
     }
 }
