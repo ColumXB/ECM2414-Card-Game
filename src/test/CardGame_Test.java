@@ -14,6 +14,10 @@ import org.junit.jupiter.api.DisplayName;
 public class CardGame_Test {
     CardGame game = new CardGame();
 
+    //WinCheck Tests
+    //Tests various arrangements of the winCheckArray and the expected returns
+
+
     @DisplayName("No Nulls WinCheck")
     @Test
     public void testArrayFullWithNoNullValues() {
@@ -55,6 +59,11 @@ public class CardGame_Test {
         Boolean[] winCheckArray = {true};
         assertTrue(Utility.isWinCheckArrayFull(winCheckArray));
     }
+
+
+    //findWinningIndex Tests
+    //Tests various arrangements of the winCheckArray in findWinningIndex and the expected returns
+
 
     @DisplayName("One true value at the start WinningIndex")
     @Test
