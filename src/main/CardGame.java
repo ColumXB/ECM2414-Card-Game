@@ -1,11 +1,11 @@
 package main;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CardGame {
-
-    public static AtomicInteger winningPlayerId;
+    public AtomicInteger winningPlayerId;
 
     public static class Utility{
         /**
@@ -36,24 +36,10 @@ public class CardGame {
                     counter++;
                 }
             } catch (NullPointerException e) {
-                throw new NullPointerException("Null in winCheckArray");
+                ThreadedLogger.log("NullPointerException, Null in winCheckArray");
+                throw new NullPointerException();
             }
             return -1;
-        }
-
-        public static void printArray(Boolean[] array) {
-            StringBuilder output = new StringBuilder();
-            output.append("[");
-            for (Boolean element : array) {
-                output.append(" ");
-                if (element == null) {
-                    output.append("null");
-                } else {
-                    output.append(element.toString());
-                } 
-            }
-            output.append(" ]");
-            System.out.println(output.toString());
         }
 
         public static void clearArray(Boolean[] array) {
@@ -63,29 +49,34 @@ public class CardGame {
         }
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws HandLengthException, InvalidCardException, IOException, DeckLengthException, InvalidCardException {
+
+        Thread logger = new Thread(new ThreadedLogger());
+        logger.start();
+
+        CardGame game = new CardGame();
         PackHandler oops = new PackHandler();
         oops.inputs();
         oops.packReader();
-        int[][][] gameArray = oops.getGameArray();
+        int[][][] gameArray = oops.packSplitter();
         int numPlayers = oops.getNumPlayers();
         Deck[] deckArray = new Deck[numPlayers];
         Player[] playerArray = new Player[numPlayers];
         Thread[] threadArray = new Thread[numPlayers];
-        winningPlayerId = new AtomicInteger();
-        winningPlayerId.set(0);
+        game.winningPlayerId = new AtomicInteger();
+        game.winningPlayerId.set(0);
         Boolean[] winCheckArray = new Boolean[numPlayers];
 
-        //TODO remove
-        StringBuilder penis;
+        
     
         //deck creation
         try {
             for (int i = 0; i<numPlayers; i++) {
                 deckArray[i] = new Deck(gameArray[1][i]);
             }
-        } catch (Exception e) {
-            throw new Exception("oh no!");
+        } catch (DeckLengthException e) {
+            ThreadedLogger.log("DeckLengthException in deck creation in CardGame");
+            throw e;
         }
 
         //player and thread creation
@@ -97,12 +88,19 @@ public class CardGame {
                 } else {
                     discardDeckIndex = i+1;
                 }
-                playerArray[i] = new Player(gameArray[0][i], winCheckArray, winningPlayerId, deckArray[i], deckArray[discardDeckIndex]);
+                playerArray[i] = new Player(gameArray[0][i], winCheckArray, game.winningPlayerId, deckArray[i], deckArray[discardDeckIndex]);
                 threadArray[i] = new Thread(playerArray[i]);
                 System.out.println(i+ " " + discardDeckIndex);
             }
-        } catch (Exception e) {
-            throw new Exception("oh no!");
+        } catch (HandLengthException e) {
+            ThreadedLogger.log("HandLengthException in player and thread creation in CardGame");
+            throw e;
+        } catch (InvalidCardException e) {
+            ThreadedLogger.log("InvalidCardException in player and thread creation in CardGame");
+            throw e;
+        } catch (IOException e) {
+            ThreadedLogger.log("IOException in player and thread creation in CardGame");
+            throw e;
         }
 
         //starting threads
@@ -110,23 +108,21 @@ public class CardGame {
             thread.start();
         }
 
-        TimeUnit.SECONDS.sleep(5);
-
         //game loop
         try {
             // Check for all results
-            while (winningPlayerId.get() == 0) {
+            while (game.winningPlayerId.get() == 0) {
 
                 // Wait for array to fill with results
-                Utility.printArray(winCheckArray);
                 while (!Utility.isWinCheckArrayFull(winCheckArray)) {
-                    TimeUnit.MILLISECONDS.sleep(1);
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(1);
+                    } catch (InterruptedException e) {}
                 }
-                Utility.printArray(winCheckArray);
 
                 // Pull first winning results
-                winningPlayerId.set(Utility.findWinningIndex(winCheckArray));
-                winningPlayerId.getAndIncrement();
+                game.winningPlayerId.set(Utility.findWinningIndex(winCheckArray));
+                game.winningPlayerId.getAndIncrement();
 
                 // Clear the array
                 Utility.clearArray(winCheckArray);
@@ -139,9 +135,9 @@ public class CardGame {
             }
         } finally {
             for (int i = 0; i<numPlayers; i++) {
-                System.out.println("final winningPlayerId: " + winningPlayerId);
                 deckArray[i].finalDeckLog();
-                playerArray[i].finalPlayerLog(winningPlayerId.get());
+                playerArray[i].finalPlayerLog(game.winningPlayerId.get());
+                ThreadedLogger.shutDown();
             }
         }
     }
