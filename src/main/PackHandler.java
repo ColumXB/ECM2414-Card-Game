@@ -2,6 +2,7 @@ package main;
 import java.io.File;
 import java.util.Scanner;
 import java.io.FileNotFoundException;
+import java.util.Arrays;
 import java.util.InputMismatchException;
 
 public class PackHandler {
@@ -10,6 +11,11 @@ public class PackHandler {
     private int packSize; 
     String filePath; //text file holding the values that will be used for pack
     private int[] pack;
+    private int[][] playerPacks;
+    private int[][] deckPacks;
+    private int[][] playerPacksArray;
+    private int[][] deckPacksArray;
+    private int[][][] gameArray;
 
     /**
      * prints prompts to terminal expecting inputs used in creating/validating the pack
@@ -27,10 +33,11 @@ public class PackHandler {
                 scanner.nextLine();
 
                 // Validate and initialize pack if input is valid
-                this.pack = validateNumPlayers(numPlayers);
+                validateNumPlayers(numPlayers);
                 break; // Exit loop after successful validation
 
-            } catch (IllegalArgumentException | InputMismatchException e) { //exceptions thrown when an invalid input is given, such as a string.
+            } catch (IllegalArgumentException | InputMismatchException e) {
+                ThreadedLogger.log("Invalid integer input for numPlayers");
                 System.out.println("Invalid input. Please enter a valid integer:");
                 scanner.next(); // Clear invalid input
             }
@@ -45,10 +52,17 @@ public class PackHandler {
                     // Validate filepath
                     filePath = validateFilePath(initialFilePath);
                     break; // Exit loop after successful validation
-                } catch (IllegalArgumentException e) { // exception thrown when the file input is invalid
+
+                    //Catch but don't throw exceptions to allow for the code to re-run until valid input
+                } catch (IllegalArgumentException e) {
+                    ThreadedLogger.log("IllegalArgumentException for valid pack location.");
                     System.out.println("Invalid input. Please enter valid location of pack to load:");
-                } catch (InvalidFileException e) {// exception thrown when the file input doesnt not match a necessary file location 
+                } catch (InvalidFileException e) {
+                    ThreadedLogger.log("InvalidFileException for valid pack location."); 
                     System.out.println("Invalid file. Please enter valid location of pack to load: ");
+                } catch (FileNotFoundException e) {
+                    ThreadedLogger.log("FileNotFoundException for valid pack location."); 
+                    System.out.println("File not found. Please enter valid location of pack to load: ");
                 }
             }
 
@@ -60,7 +74,7 @@ public class PackHandler {
      * @param numPlayers
      * @return pack
      */
-    public int[] validateNumPlayers(int numPlayers) {
+    private void validateNumPlayers(int numPlayers) {
         // Check if the number of players is a valid positive integer
         if (numPlayers <= 0) {
             throw new IllegalArgumentException("Error: Number of players must be a positive integer greater than 0.");
@@ -72,8 +86,6 @@ public class PackHandler {
         this.numPlayers = numPlayers;
         this.packSize = 8 * numPlayers;
         this.pack = new int[packSize];
-
-        return pack;
     }
 
     /**
@@ -81,7 +93,7 @@ public class PackHandler {
      * @param filePath
      * @return filePath
      */
-    public String validateFilePath(String filePath) throws InvalidFileException {
+    private String validateFilePath(String filePath) throws InvalidFileException, FileNotFoundException, IllegalArgumentException {
         int lineCount = 0;
 
         // validate file location
@@ -90,30 +102,22 @@ public class PackHandler {
         }
 
         // search for file location
-        try {
-            File cardPackFile = new File(filePath);
-        if (!cardPackFile.exists()) {
-            System.out.println("File does not exist at the given path.");
-            throw new InvalidFileException("File not found: " + filePath);
+        File cardPackFile = new File(filePath);
+
+        try{
+            Scanner reader = new Scanner(cardPackFile);
+            while (reader.hasNextLine()) {
+                reader.nextLine();
+                lineCount++;
+            }
+            reader.close();
+        } catch (FileNotFoundException e) {
+            ThreadedLogger.log("FileNotFoundException, File not found: " + filePath); 
+            throw e;
         }
-
-        Scanner reader = new Scanner(cardPackFile);
-
-        while (reader.hasNextLine()) {
-            reader.nextLine();
-            lineCount++;
-        }
-
-        reader.close();
-        } catch (FileNotFoundException e) { // thrown when file location cannot be found or doesnt match anything.
-            System.out.println("File not found: " + filePath);
-            throw new InvalidFileException("File not found: " + filePath);
-        }
-
-        System.out.println("Required length: " + lineCount);
-        System.out.println("Actual length: " + this.packSize);
 
         if (lineCount != this.packSize) {
+            ThreadedLogger.log("Error: Length of file does not match pack size.");
             throw new InvalidFileException("Error: Length of file does not match pack size.");
         }
         
@@ -125,35 +129,35 @@ public class PackHandler {
      * @param filePath
      * @return pack once populated
      */
-    public int[] packReader () {
+    public void packReader() throws InvalidCardException, FileNotFoundException {
 
         int packElement = 0;
+        Scanner reader;
         try {
             File cardPackFile = new File(this.filePath);
-            Scanner reader = new Scanner(cardPackFile);
-
+            reader = new Scanner(cardPackFile);
 
             while (reader.hasNextLine()) {
                 String line = reader.nextLine();
 
-                //iterate through each line in the input pack
-                //replace the empty space in pack with a valid value
+                //iterate through each line in the input pack replacing empty space in pack with a valid value
                 try {
                     int data = validityCheck(line);
                     pack[packElement] = data;
                     packElement ++;
-                } catch (InvalidCardValueException e) { // thrown when card value is below 1 thus invalid
-                    System.out.println("Error: " + e.getMessage());
-                    e.printStackTrace();
+                } catch (InvalidCardException e) {
+                    int errorLine = packElement+1;
+                    ThreadedLogger.log("InvalidCardException in packReader(), Invalid card in input pack in line " + errorLine);
+                    reader.close();
+                    throw e;
                 }
             }
             reader.close();
+            
         } catch (FileNotFoundException e) {
-            System.out.println("File Path Error.");
-            e.printStackTrace();
+            ThreadedLogger.log("FileNotFoundException in packReader()");
+            throw e;
         }
-
-        return pack;
     }
 
     /**
@@ -162,7 +166,7 @@ public class PackHandler {
      * @param line a line taken from the input pack to be tested for validity
      * @return valid card value to be put into the pack being created
      */
-    public int validityCheck(String line) throws InvalidCardValueException{
+    private int validityCheck(String line) throws InvalidCardException{
          
         try {
             int validInput = Integer.parseInt(line); // Convert the line to an integer
@@ -171,22 +175,16 @@ public class PackHandler {
             if (validInput > 0) {
                 return validInput;
             } else {
-                throw new InvalidCardValueException("Input must be greater than 0: " + line);
+                throw new InvalidCardException("Input must be greater than 0: " + line);
             }
 
         // exception if line cannot be converted into an integer e.g. a lettered string
         } catch (NumberFormatException e) {
-            throw new InvalidCardValueException("Invalid integer in file: " + line);
+            ThreadedLogger.log("InvalidCardException, Invalid integer in file: " + line);
+            throw new InvalidCardException("Invalid integer in file: " + line);
         }
     }
 
-    /**
-     * Returns the array of values that makes up Pack
-     * @return
-     */
-    public int[] getPack() {
-        return pack;
-    }
 
     /**
      * @return numPlayers
@@ -196,28 +194,67 @@ public class PackHandler {
     }
 
     /**
-     * used in testing for setting an specific example pack size
-     * @param packSize
+     * Splits the main pack into player and deck packs, along with distribution of cards in round-robin fashion.
+     * @param pack
+     * @return 3D 'gameArray' of player and deck packs.
      */
-    public void setPackSize(int packSize) {
-        this.packSize = packSize;
+    public int[][][] packSplitter() {
+        if (this.pack.length != numPlayers * 8) {
+            throw new IllegalArgumentException("Pack size must be 8 times the number of players.");
+        }
+
+        //initialise packs
+        playerPacksArray = new int[numPlayers][4];
+        deckPacksArray = new int[numPlayers][4];
+        gameArray = new int[2][][];
+
+        // Split full pack array
+        int middleOfPack = pack.length / 2;
+        int[] fullPlayerPack = Arrays.copyOfRange(pack, 0, middleOfPack);
+        int[] fullDeckPack = Arrays.copyOfRange(pack, middleOfPack, pack.length);
+
+        // Round-robin distribution for packs
+        playerPacks = distributePack(fullPlayerPack);
+        deckPacks = distributePack(fullDeckPack);
+
+        // Group the individual packs into the respective arrays
+        playerPacksArray = groupPacks(playerPacks);
+        deckPacksArray = groupPacks(deckPacks);
+
+        // Create the final gameArray as a two-part array
+        gameArray[0] = playerPacksArray; // Group 1: Players
+        gameArray[1] = deckPacksArray;   // Group 2: Decks
+
+        return gameArray;
     }
 
     /**
-     * @return pack size
+     * distribute pack elements into player/deck packs
+     * @param fullPack
+     * @return packs
      */
-    public int getPackSize() {
-        return this.packSize;
-    }
-
-    public static void main(String[] args) {
-
-        PackHandler oops = new PackHandler();
-        oops.inputs();
-        oops.packReader();
-        for (int singularOop:oops.getPack()) {
-            System.out.print(singularOop);
-            System.out.print(",");
+    private int[][] distributePack(int[] fullPack) {
+        int[][] packs = new int[numPlayers][4];
+        for (int i = 0; i < fullPack.length; i++) {
+            int targetPack = i % numPlayers;  // Which player pack to put the element in
+            int position = i / numPlayers;    // Position in the target pack
+            packs[targetPack][position] = fullPack[i];
         }
+        return packs;
     }
+
+    /**
+     * group packs into array
+     * @param packs
+     * @return groupedPacks
+     */
+    private int[][] groupPacks(int[][] packs) {
+        int[][] groupedPacks = new int[numPlayers][4];
+        for (int i = 0; i < numPlayers; i++) {
+            groupedPacks[i] = packs[i];  // Group the packs into the array
+        }
+        return groupedPacks;
+    }
+
+    public static void main(String[] args) {}
 }
