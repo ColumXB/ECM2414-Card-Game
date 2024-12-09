@@ -22,9 +22,10 @@ public class OutputManager {
      * Constructor for logger, File is opened with the ability to write to it.
      * File chosen is completely cleared
      * @param filename Name of file to be written to
+     * @param appendable Dictates whether the file will be appended to (true) or will clear the file and start a new (false)
      * @throws Exception There are several causes for this exception
      */
-    public OutputManager(String filename) throws IOException {
+    public OutputManager(String filename, boolean appendable) throws IOException {
 
         if (filename == null) {
             throw new NullPointerException();
@@ -39,7 +40,11 @@ public class OutputManager {
         this.lock = channel.lock();
 
         // Deletes all contents of file
-        channel.truncate(0);
+        if (appendable) {
+            channel.position(fileStream.length());
+        } else {
+            channel.truncate(0);
+        }
     }
 
 
@@ -51,22 +56,29 @@ public class OutputManager {
      * @throws IOException
      */
     public void output(String message) throws IOException {
+        try {
+            if (message == null) {
+                throw new NullPointerException();
+            }
 
-        if (message == null) {
-            throw new NullPointerException();
+            if (isClosed) {
+                throw new IOException("Cannot write to closed OutputManager");
+            }
+
+            buffer = ByteBuffer.wrap(message.toString().getBytes(StandardCharsets.UTF_8));
+
+            //TODO insert actual logging here
+            this.channel.write(buffer);
+
+            System.out.println(message.toString());
+
+            // Adds a newline character (Encoding for UTF-8)
+            byte[] newline = {(byte) 0x0A};
+            this.channel.write(ByteBuffer.wrap(newline));
+        } catch (Exception e) {
+            System.out.println(e.toString());
+            throw e;
         }
-
-        if (isClosed) {
-            throw new IOException("Cannot write to closed output manager");
-        }
-
-        buffer = ByteBuffer.wrap(message.toString().getBytes(StandardCharsets.UTF_8));
-        //TODO insert actual logging here
-        this.channel.write(buffer);
-
-        // Adds a newline character (Encoding for UTF-8)
-        byte[] newline = {(byte) 0x0A};
-        this.channel.write(ByteBuffer.wrap(newline));
     }
 
 
@@ -77,7 +89,7 @@ public class OutputManager {
     public void close() throws IOException {
         
         if (isClosed) {
-            throw new IOException("Cannot close closed output manager");
+            throw new IOException("Cannot close closed OutputManager");
         }
 
         this.lock.release();
