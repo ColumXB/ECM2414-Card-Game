@@ -1,10 +1,6 @@
 package main;
 
 import java.io.IOException;
-import java.sql.Date;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -21,10 +17,6 @@ public class Player implements Runnable {
     private Deck pickUpDeck;
     private Deck discardDeck;
 
-    //TODO remove
-    DateTimeFormatter myDateObject = DateTimeFormatter.ofPattern("HH:mm:ss");
-    public boolean poop;
-
     /**
      * Constructor for Player
      * @param initialHand
@@ -38,8 +30,10 @@ public class Player implements Runnable {
     public Player(int[] initialHand, Boolean[] winCheckArray, AtomicInteger winningPlayerId, Deck pickUpDeck, Deck discardDeck) throws HandLengthException, InvalidCardException, IOException {
 
         if (initialHand == null) {
+            ThreadedLogger.log("NullPointerException in Player() in player " + playerID);
             throw new NullPointerException();
         } else if (initialHand.length != NUM_CARDS) {
+            ThreadedLogger.log("HandLengthException in Player() in player " + playerID);
             throw new HandLengthException("Initial hand length must be of length 4");
         }
 
@@ -53,12 +47,10 @@ public class Player implements Runnable {
             this.hand[i].setWeighting(initialHand[i] == playerID);
         }
 
-
         this.pickUpDeck = pickUpDeck;
         this.discardDeck = discardDeck;
 
-
-        outputManager = new OutputManager(String.format("player%d_output.txt", playerID));
+        outputManager = new OutputManager(String.format("player%d_output.txt", playerID), false);
     }
 
     /**
@@ -66,20 +58,23 @@ public class Player implements Runnable {
      * @throws HandLengthException
      * @throws IOException
      */
-    public void logCards() throws HandLengthException, IOException {
+    private void logCards() throws HandLengthException, IOException {
 
-        // Message logic
         StringBuilder message = new StringBuilder();
 
         message.append(String.format("player%d contents:", playerID));
-        message.append(handtoString());
+        message.append(handToString());
         
         this.outputManager.output(message.toString());
     }
 
-    private String handtoString() throws HandLengthException {
+    /**
+     * converts players hand to string to be printed
+     * @return message
+     * @throws HandLengthException
+     */
+    private String handToString() throws HandLengthException {
         int[] outputHand = new int[NUM_CARDS];
-        // Error catching logic
         isOneNull();
 
         outputHand = getNonNullCardValues();
@@ -95,29 +90,29 @@ public class Player implements Runnable {
      * final log for end of game. closes the output manager
      * @throws IOException
      */
-    public void finalPlayerLog(Integer winningPlayerId) throws IOException {
+    public void finalPlayerLog(Integer winningPlayerId) throws HandLengthException, IOException {
         // Logs card pick up
-        StringBuilder message = new StringBuilder();
+        try{
+            StringBuilder message = new StringBuilder();
 
-        message.append(String.format("player %d ", winningPlayerId));
-        message.append(String.format("has informed player %d ", this.playerID));
-        message.append(String.format("that player %d has won", winningPlayerId));
+            message.append(String.format("player %d ", winningPlayerId));
+            message.append(String.format("has informed player %d ", this.playerID));
+            message.append(String.format("that player %d has won", winningPlayerId));
 
-        this.outputManager.output(message.toString());
+            this.outputManager.output(message.toString());
+            this.outputManager.output(String.format("player %d exits", this.playerID));
 
-
-        this.outputManager.output(String.format("player %d exits", this.playerID));
-
-        message = new StringBuilder();
-
-        message.append(String.format("player%d final hand:", playerID));
-        try {
-            message.append(handtoString());
-        } catch (HandLengthException e) {
-            //TODO log Handlengthexception
+            message = new StringBuilder();
+            message.append(String.format("player%d final hand:", playerID));
+            try {
+                message.append(handToString());
+            } catch (HandLengthException e) {
+                ThreadedLogger.log("HandLengthException in finalPlayerLog() in player " + playerID);
+                throw new HandLengthException("Hand length must be of length 4");
+            }
+        } finally {
+            this.outputManager.close();
         }
-
-        this.outputManager.close();
     }
 
 
@@ -177,9 +172,9 @@ public class Player implements Runnable {
         int nullIndex  = -1;
         try {
             isOneNull();
-        } catch (HandLengthException e) {//TODO log
-            
-            throw e;
+        } catch (HandLengthException e) {
+            ThreadedLogger.log("HandLengthException in pickUp() in player " + playerID);
+            throw new HandLengthException("HandLengthException in pickUp()");
         }
         
         // Find the first null slot in the hand
@@ -191,17 +186,16 @@ public class Player implements Runnable {
         }
 
         if (nullIndex == -1) {
+            ThreadedLogger.log("HandLengthException in pickUp() in player " + playerID);
             throw new HandLengthException(String.format("Player %d hand has no available null slots for a new card.", this.playerID));
         }
 
-        Card newCard = this.pickUpDeck.removeCard(); //TODO DECK LENGTH EXCEPTION BEING THROWN HERE
+        Card newCard = this.pickUpDeck.removeCard();
 
 
         // Weighting reset for new card
         newCard.setWeighting(newCard.getCardValue() == this.playerID);
         this.hand[nullIndex] = newCard;
-        //TODO remove
-        this.outputManager.output(LocalDateTime.now().format(this.myDateObject));
         // Logs card pick up
         StringBuilder message = new StringBuilder();
 
@@ -220,17 +214,14 @@ public class Player implements Runnable {
         int nonNullCount = 0;
         int nullCount = 0;
 
-
         for (Card card : this.hand) {
-
-            if (card != null) {
-                nonNullCount++;
-            } else {
+            if (card == null) {
                 nullCount++;
             }
         }
     
-        if (nonNullCount != NUM_CARDS || nullCount != 1) {
+        if (nullCount != 1) {
+            ThreadedLogger.log("HandLengthException in isOneNull() in player " + playerID);
             throw new HandLengthException(String.format(
                 "Player %d hand has %d non-null cards and %d nulls, instead of %d non-null and 1 null.", 
                 this.playerID, nonNullCount, nullCount, NUM_CARDS
@@ -248,14 +239,14 @@ public class Player implements Runnable {
 
         for (Card card : this.hand) {
             if (card != null && card.getWeighting() > 0) {
-                int weighting = card.getWeighting(); // Get the card's weighting
-                
+                int weighting = card.getWeighting();
                 total += weighting;
             }
         }
 
         if (total <= 0) {
-            throw new IllegalStateException("Hand contains no valid cards."); //TODO wincheck should happen before this anyway
+            ThreadedLogger.log("IllegalStateException in getDiscardCardIndex() in player " + playerID);
+            throw new IllegalStateException("Hand contains no valid cards.");
         }
 
         // Adds one as the lowest value should be 1
@@ -272,25 +263,21 @@ public class Player implements Runnable {
 
 
     /**
-     * discard card to discard deck. increments weighting of all remaining cards. logs discard.
+     * discards card to discard deck. increments weighting of all remaining cards. logs discard.
      * @return discard card
      * @throws DeckLengthException
      * @throws IOException
      */
-    public Card discard() throws DeckLengthException, IOException {//TODO WINCHECK BEFORE HERE
+    public Card discard() throws DeckLengthException, IOException {
 
         int index = getDiscardCardIndex();
-
-        // Takes card 
         Card discardCard = this.hand[index];
 
-        
-        
         this.hand[index] = null;
         try{
             this.discardDeck.addCard(discardCard);
         } catch (IOException e) {
-            System.out.println("addcard()");
+            ThreadedLogger.log("IOException in discard() in player " + playerID);
             throw e;
         }
 
@@ -300,12 +287,6 @@ public class Player implements Runnable {
                 card.incrementWeighting();
             }
         }
-        //TODO remove 
-        try{this.outputManager.output(LocalDateTime.now().format(this.myDateObject));
-        } catch (IOException e) {
-            System.out.println("outputdate");
-            throw e;
-        }
         
         // Logs card discard
         StringBuilder message = new StringBuilder();
@@ -314,9 +295,9 @@ public class Player implements Runnable {
         message.append(String.format("discards a %d ", discardCard.getCardValue()));
         message.append(String.format("to deck %d", this.discardDeck.getDeckID()));
         try {
-        this.outputManager.output(message.toString());
+            this.outputManager.output(message.toString());
         } catch (IOException e) {
-            System.out.println("outputmanager");
+            ThreadedLogger.log("IOException in discard() in player " + playerID);
             throw e;
         }
   
@@ -324,9 +305,6 @@ public class Player implements Runnable {
     }
 
     public void run() {
-
-        poop = false;
-
         // Publishes results
         this.winCheckArray[playerID-1] = (Boolean) winCheck();
         // Waits for other results
@@ -334,26 +312,20 @@ public class Player implements Runnable {
             while (!Thread.interrupted()) {
                 TimeUnit.MILLISECONDS.sleep(1);
                 }
-        } catch (Exception e) {}
+        } catch (InterruptedException e) {}
         
         // Checks for other results
         while (this.winningPlayerId.get() == 0) {
             try{
                 this.pickUp();
-                System.out.println("pickup " + playerID);
                 this.discard();
-                System.out.println("discard " + playerID);
                 this.logCards();
-                System.out.println("log cards " + playerID);
             } catch (HandLengthException e) {
-                //TODO log handlengthexception
-                System.out.println("Handlengthexception"); //TODO here
+                ThreadedLogger.log("HandLengthException in player " + playerID);
             } catch (DeckLengthException e) { 
-                //TODO log Decklengthexception
-                System.out.println("Decklengthexception");
+                ThreadedLogger.log("DeckLengthException in player " + playerID);
             } catch (IOException e) {
-                //TODO log IOexception
-                System.out.println("IOexception " + playerID); //TODO here
+                ThreadedLogger.log("IOException in player " + playerID);
             }
 
             // Publishes results
@@ -367,6 +339,5 @@ public class Player implements Runnable {
         }
     }
 
-    public static void main(String[] args) throws HandLengthException, InvalidCardException, IOException {
-    }
-} //TODO Goals: Fix the decklengthexception (both players drawing from same deck), logging, syncronization/one thread being much further ahead than the other
+    public static void main(String[] args) throws HandLengthException, InvalidCardException, IOException {}
+}
