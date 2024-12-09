@@ -10,6 +10,7 @@ import main.OutputManager;
 
 import java.io.IOException;
 import java.nio.channels.OverlappingFileLockException;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 import org.junit.Test;
@@ -40,7 +41,8 @@ public class OutputManager_Test {
     @DisplayName("Basic Constructor Check")
     @Test
     public void constructorTest() {
-        assertDoesNotThrow(() -> new OutputManager("temp.txt").close());
+        assertDoesNotThrow(() -> new OutputManager("temp.txt", false).close());
+        assertDoesNotThrow(() -> new OutputManager("temp.txt", true).close());
     }
 
 
@@ -52,9 +54,13 @@ public class OutputManager_Test {
     @Test
     public void lockingTest() throws IOException{
 
-        OutputManager outputManager1 = new OutputManager(this.filename);
-        assertThrows(OverlappingFileLockException.class, () -> new OutputManager(this.filename).close());
+        OutputManager outputManager1 = new OutputManager(this.filename, false);
+        assertThrows(OverlappingFileLockException.class, () -> new OutputManager(this.filename, false).close());
         outputManager1.close();
+
+        OutputManager outputManager2 = new OutputManager(this.filename, true);
+        assertThrows(OverlappingFileLockException.class, () -> new OutputManager(this.filename, true).close());
+        outputManager2.close();
     }
 
     
@@ -67,7 +73,7 @@ public class OutputManager_Test {
     public void clearTest() throws IOException {
 
         // Adding text
-        OutputManager outputManager1 = new OutputManager(this.filename);
+        OutputManager outputManager1 = new OutputManager(this.filename, false);
         outputManager1.output(this.testMessage1);
         outputManager1.close();
 
@@ -78,7 +84,7 @@ public class OutputManager_Test {
         reader1.close();
 
         // Clearing text
-        OutputManager outputManager2 = new OutputManager(this.filename);
+        OutputManager outputManager2 = new OutputManager(this.filename, false);
         outputManager2.close();
 
         // Check there is no text after clearing
@@ -87,6 +93,40 @@ public class OutputManager_Test {
         assertThrows(Exception.class, () -> reader2.nextLine());
         
         reader2.close();
+    }
+
+    /**
+     * Checks that the when appendable is true, that previous file data isn't deleted
+     */
+    @DisplayName("Appending Function Check")
+    @Test
+    public void appendTest() throws Exception {
+        // Clear all text and check it's clear
+        OutputManager outputManager1 = new OutputManager(this.filename, false);
+        outputManager1.close();
+        File file1 = new File(this.filename);
+        Scanner reader1 = new Scanner(file1);
+        assertThrows(NoSuchElementException.class, () -> reader1.nextLine());
+        reader1.close();
+
+        // Add text and check it's been added
+        OutputManager outputManager2 = new OutputManager(this.filename, true);
+        outputManager2.output(testMessage1);
+        outputManager2.close();
+        File file2 = new File(this.filename);
+        Scanner reader2 = new Scanner(file2);
+        assertEquals(this.testMessage1, reader2.nextLine());
+        reader2.close();
+
+        // Add text and check it's been added on top of previous text
+        OutputManager outputManager3 = new OutputManager(this.filename, true);
+        outputManager3.output(testMessage2);
+        outputManager3.close();
+        File file3 = new File(this.filename);
+        Scanner reader3 = new Scanner(file3);
+        assertEquals(this.testMessage1, reader3.nextLine());
+        assertEquals(this.testMessage2, reader3.nextLine());
+        reader3.close();
     }
 
 
@@ -99,7 +139,7 @@ public class OutputManager_Test {
     public void writeCheck() throws IOException {
 
         // Adding text
-        OutputManager outputManager1 = new OutputManager(this.filename);
+        OutputManager outputManager1 = new OutputManager(this.filename, false);
         outputManager1.output(this.testMessage1);
         outputManager1.close();
 
@@ -121,7 +161,7 @@ public class OutputManager_Test {
     public void newLineTest() throws IOException {
         
         // Writes two new lines which will allow Scanner to successfully read one line
-        OutputManager outputManager1 = new OutputManager(this.filename);
+        OutputManager outputManager1 = new OutputManager(this.filename, false);
         outputManager1.output("\n");
         outputManager1.close();
 
@@ -143,7 +183,7 @@ public class OutputManager_Test {
 
         String actualMessage;
         
-        OutputManager outputManager1 = new OutputManager(this.filename);
+        OutputManager outputManager1 = new OutputManager(this.filename, false);
         outputManager1.output(this.testMessage1);
         outputManager1.output(this.testMessage2);
         outputManager1.close();
@@ -167,7 +207,7 @@ public class OutputManager_Test {
     @Test
     public void closureTest() throws IOException {
         
-        OutputManager outputManager1 = new OutputManager(this.filename);
+        OutputManager outputManager1 = new OutputManager(this.filename, false);
         assertDoesNotThrow(() -> outputManager1.close());
     }
 
@@ -180,10 +220,10 @@ public class OutputManager_Test {
     @Test
     public void lockReleaseTest() throws IOException {
 
-        OutputManager outputManager1 = new OutputManager(this.filename);
+        OutputManager outputManager1 = new OutputManager(this.filename, false);
         outputManager1.close();
 
-        assertDoesNotThrow(() -> new OutputManager(this.filename).close());
+        assertDoesNotThrow(() -> new OutputManager(this.filename, false).close());
     }
 
 
@@ -196,7 +236,7 @@ public class OutputManager_Test {
     public void closedOutputManagerWriteTest() throws IOException {
 
         // Check if logging is functional
-        OutputManager outputManager1 = new OutputManager(this.filename);
+        OutputManager outputManager1 = new OutputManager(this.filename, false);
         assertDoesNotThrow(() -> outputManager1.output(this.testMessage1));
         outputManager1.close();
         
@@ -229,7 +269,7 @@ public class OutputManager_Test {
             file1.delete();
         }
         
-        assertDoesNotThrow(() -> new OutputManager(this.filename).close());
+        assertDoesNotThrow(() -> new OutputManager(this.filename, false).close());
 
         File file2 = new File(this.filename);
         assert file2.exists();
@@ -244,7 +284,7 @@ public class OutputManager_Test {
     @DisplayName("Double Close Check")
     @Test
     public void doubleCloseTest() throws IOException {
-        OutputManager outputManager1 = new OutputManager(this.filename);
+        OutputManager outputManager1 = new OutputManager(this.filename, false);
         outputManager1.close();
         Exception exception = assertThrows(IOException.class, () -> outputManager1.close());
         String expectedMessage = "Cannot close closed OutputManager";
@@ -256,14 +296,14 @@ public class OutputManager_Test {
     @DisplayName("Null Filename Check")
     @Test
     public void nullFilenameTest() {
-        assertThrows(NullPointerException.class, () -> new OutputManager(null));
+        assertThrows(NullPointerException.class, () -> new OutputManager(null, false));
     }
 
 
     @DisplayName("Null Message Check")
     @Test
     public void nullMessageTest() throws IOException{
-        OutputManager outputManager1 = new OutputManager(this.filename);
+        OutputManager outputManager1 = new OutputManager(this.filename, false);
         assertThrows(NullPointerException.class, () -> outputManager1.output(null));
         outputManager1.close();
     }
