@@ -218,7 +218,7 @@ public class Player_Test {
         Field handField = Player.class.getDeclaredField("hand");
         handField.setAccessible(true);
 
-        Card[] invalidHand = new Card[] {new Card(1), new Card(2), new Card(3), new Card(4), new Card(5)};
+        Card[] invalidHand = new Card[] {new Card(1), new Card(2), new Card(3), new Card(4), null};
         handField.set(player, invalidHand);
 
         Method indexOfMethod = Player.class.getDeclaredMethod("discard");
