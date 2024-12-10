@@ -1,4 +1,4 @@
-package main;
+
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -51,8 +51,9 @@ public class CardGame {
 
     public static void main(String[] args) throws HandLengthException, InvalidCardException, IOException, DeckLengthException, InvalidCardException {
 
-        Thread logger = new Thread(new ThreadedLogger());
-        logger.start();
+        ThreadedLogger logger = new ThreadedLogger();
+        Thread loggerThread = new Thread(logger);
+        loggerThread.start();
 
         CardGame game = new CardGame();
         PackHandler oops = new PackHandler();
@@ -137,7 +138,7 @@ public class CardGame {
             for (int i = 0; i<numPlayers; i++) {
                 deckArray[i].finalDeckLog();
                 playerArray[i].finalPlayerLog(game.winningPlayerId.get());
-                ThreadedLogger.shutDown();
+                logger.shutDown();
             }
         }
     }
